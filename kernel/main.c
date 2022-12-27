@@ -130,7 +130,7 @@ PUBLIC int kernel_main()
 	p_proc_ready	= proc_table;
 
 	// 8253 PIT
-	out_byte(TIMER_MODE, RATE_GENETATOR);
+	out_byte(TIMER_MODE, RATE_GENERATOR);
 	out_byte(TIMER0, (u8) (TIMER_FREQ)/ HZ);
 	out_byte(TIMER0, (u8) ((TIMER_FREQ)/ HZ >> 8));
 
@@ -205,7 +205,7 @@ void reader_write(int i, int time){
 	    reader_cnt++;
 	    v_sys(&mutex1);
 	    v_sys(&r);
-	    v_sys(&mutex3)
+	    v_sys(&mutex3);
 
 	    p_sys(&reader);//最多允许多少个读者一起读
 
