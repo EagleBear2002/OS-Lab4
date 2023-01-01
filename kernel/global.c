@@ -10,30 +10,44 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
-#include "proto.h"
+#include "tty.h"
+#include "console.h"
 #include "proc.h"
 #include "global.h"
+#include "proto.h"
 
-/* 进程表 */
-PUBLIC    PROCESS proc_table[NR_TASKS];
 
-PUBLIC    char task_stack[STACK_SIZE_TOTAL];
+PUBLIC	PROCESS	proc_table[NR_TASKS + NR_PROCS];
 
-/* TODO: fixed 任务列表 */
-PUBLIC    TASK task_table[NR_TASKS] = {
-		{ReaderA, STACK_SIZE_ReaderA, "ReaderA"},
-		{ReaderB, STACK_SIZE_ReaderB, "ReaderB"},
-		{ReaderC, STACK_SIZE_ReaderC, "ReaderC"},
-		{WriterD, STACK_SIZE_WriterD, "WriterD"},
-		{WriterE, STACK_SIZE_WriterD, "WriterE"},
-		{F,       STACK_SIZE_F,       "F"}};
+PUBLIC	TASK	task_table[NR_TASKS] = {
+	{task_tty, STACK_SIZE_TTY, "tty"}};
 
-PUBLIC    irq_handler irq_table[NR_IRQ];
+PUBLIC  TASK    user_proc_table[NR_PROCS] = {
+                                        {ReporterA, STACK_SIZE_TESTA, "ReporterA"},
+					{ReaderB, STACK_SIZE_TESTB, "ReaderB"},
+					{ReaderC, STACK_SIZE_TESTC, "ReaderC"},
+					{ReaderD, STACK_SIZE_TESTD, "ReaderD"},
+                    {WriterE, STACK_SIZE_TESTE, "WriterE"},
+                    {WriterF, STACK_SIZE_TESTF, "WriterF"}
+                    };
 
-PUBLIC    system_call sys_call_table[NR_SYS_CALL] = {
-		sys_get_ticks,
-		sys_disp_str,
-		sys_p,
-		sys_v,
-		sys_delay
+PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
+
+PUBLIC	TTY		tty_table[NR_CONSOLES];
+PUBLIC	CONSOLE		console_table[NR_CONSOLES];
+
+PUBLIC	irq_handler	irq_table[NR_IRQ];
+
+PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
+        sys_get_ticks,
+        sys_write_str,
+        sys_sleep,
+        p_process,
+        v_process
 };
+
+PUBLIC  SEMAPHORE rw_mutex = {1, 0, 0};
+PUBLIC  SEMAPHORE w_mutex = {1, 0, 0};
+PUBLIC  SEMAPHORE r_mutex = {1, 0, 0};
+PUBLIC  SEMAPHORE queue = {1, 0, 0};
+PUBLIC  SEMAPHORE n_r_mutex = {MAX_READERS, 0, 0};

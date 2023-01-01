@@ -339,17 +339,21 @@ save:
 ;                                 sys_call
 ; ====================================================================================
 sys_call:
-        call    save
+    call    save
+	;push	dword [p_proc_ready] ;以防发生进程切换，这里在开中断前压入
+    
+	sti
+	
+	push	ecx
+	push	ebx
+    call    [sys_call_table + eax * 4]
+	pop		ebx
+	pop		ecx
 
-        sti
-
-        call    [sys_call_table + eax * 4]
-        mov     [esi + EAXREG - P_STACKBASE], eax
-
-        cli
-
-        ret
-
+    mov     [esi + EAXREG - P_STACKBASE], eax        
+	
+	cli
+    ret
 
 ; ====================================================================================
 ;                                   restart
