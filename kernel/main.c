@@ -124,7 +124,7 @@ PRIVATE write_proc(int slices) {
 }
 
 // 读写公平方案
-void read_fair(char proc, int slices, char color) {
+void read_fair(int slices) {
 	P(&queue);
 	
 	P(&reader_count_mutex);
@@ -143,7 +143,7 @@ void read_fair(char proc, int slices, char color) {
 	V(&reader_count_mutex);
 }
 
-void write_fair(char proc, int slices, char color) {
+void write_fair(int slices) {
 	P(&queue);
 	P(&rw_mutex);
 	writing = 1;
@@ -155,7 +155,7 @@ void write_fair(char proc, int slices, char color) {
 }
 
 // 读者优先
-void read_rf(char proc, int slices, char color) {
+void read_rf(int slices) {
 	P(&reader_count_mutex);
 	
 	P(&reader_mutex);
@@ -178,7 +178,7 @@ void read_rf(char proc, int slices, char color) {
 	V(&reader_mutex);
 }
 
-void write_rf(char proc, int slices, char color) {
+void write_rf(int slices) {
 	P(&rw_mutex);
 	writing = 1;
 	// 写过程
@@ -188,7 +188,7 @@ void write_rf(char proc, int slices, char color) {
 }
 
 // 写者优先
-void read_wf(char proc, int slices, char color) {
+void read_wf(int slices) {
 	P(&reader_count_mutex);
 	
 	P(&queue);
@@ -211,7 +211,7 @@ void read_wf(char proc, int slices, char color) {
 	V(&reader_count_mutex);
 }
 
-void write_wf(char proc, int slices, char color) {
+void write_wf(int slices) {
 	P(&writer_mutex);
 	// 写过程
 	if (writers == 0)
@@ -237,7 +237,7 @@ write_f write_funcs[3] = {write_rf, write_wf, write_fair};
 
 void ReaderB() {
 	while (1) {
-		read_funcs[STRATEGY]('B', WORKING_SLICES_B, colors[proStats[1]]);
+		read_funcs[STRATEGY](WORKING_SLICES_B);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_B * TIME_SLICE);
 	}
@@ -245,7 +245,7 @@ void ReaderB() {
 
 void ReaderC() {
 	while (1) {
-		read_funcs[STRATEGY]('C', WORKING_SLICES_C, colors[proStats[2]]);
+		read_funcs[STRATEGY](WORKING_SLICES_C);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_C * TIME_SLICE);
 	}
@@ -253,7 +253,7 @@ void ReaderC() {
 
 void ReaderD() {
 	while (1) {
-		read_funcs[STRATEGY]('D', WORKING_SLICES_D, colors[proStats[3]]);
+		read_funcs[STRATEGY](WORKING_SLICES_D);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_D * TIME_SLICE);
 	}
@@ -261,7 +261,7 @@ void ReaderD() {
 
 void WriterE() {
 	while (1) {
-		write_funcs[STRATEGY]('E', WORKING_SLICES_E, colors[proStats[4]]);
+		write_funcs[STRATEGY](WORKING_SLICES_E);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_E * TIME_SLICE);
 	}
@@ -269,7 +269,7 @@ void WriterE() {
 
 void WriterF() {
 	while (1) {
-		write_funcs[STRATEGY]('F', WORKING_SLICES_F, colors[proStats[5]]);
+		write_funcs[STRATEGY](WORKING_SLICES_F);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_F * TIME_SLICE);
 	}
@@ -286,12 +286,12 @@ void ReporterA() {
 	printf("strategy: fair\n");
 #endif
 	
-	printf("count of max reader: %d\n", MAX_READERS);
-	printf("relax slices of B: %d\n", RELAX_SLICES_B);
-	printf("relax slices of C: %d\n", RELAX_SLICES_C);
-	printf("relax slices of D: %d\n", RELAX_SLICES_D);
-	printf("relax slices of E: %d\n", RELAX_SLICES_E);
-	printf("relax slices of F: %d\n", RELAX_SLICES_F);
+//	printf("count of max reader: %d\n", MAX_READERS);
+//	printf("relax slices of B: %d\n", RELAX_SLICES_B);
+//	printf("relax slices of C: %d\n", RELAX_SLICES_C);
+//	printf("relax slices of D: %d\n", RELAX_SLICES_D);
+//	printf("relax slices of E: %d\n", RELAX_SLICES_E);
+//	printf("relax slices of F: %d\n", RELAX_SLICES_F);
 	
 	int time_stamp = 0;
 	while (++time_stamp <= 20) {

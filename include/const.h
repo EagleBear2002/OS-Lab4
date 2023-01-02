@@ -120,7 +120,7 @@
 #define WRITE_FIRST     1
 #define FAIR            2
 
-#define STRATEGY WRITE_FIRST
+#define STRATEGY READ_FIRST
 
 #define BRIGHT_RED      0x0C
 #define BRIGHT_GREEN    0x0A
