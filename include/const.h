@@ -109,12 +109,12 @@
 #define WORKING_SLICES_F  4
 
 // TODO: Changable
-#define MAX_READERS     2
-#define RELAX_SLICES_B  0
-#define RELAX_SLICES_C  0
-#define RELAX_SLICES_D  0
-#define RELAX_SLICES_E  0
-#define RELAX_SLICES_F  0
+#define MAX_READERS     1
+#define RELAX_SLICES_B  1
+#define RELAX_SLICES_C  1
+#define RELAX_SLICES_D  1
+#define RELAX_SLICES_E  1
+#define RELAX_SLICES_F  1
 
 #define READ_FIRST      0
 #define WRITE_FIRST     1

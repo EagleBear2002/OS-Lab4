@@ -63,7 +63,7 @@ typedef struct s_task {
 #define NR_TASKS    1
 #define NR_PROCS    6
 
-typedef struct s_sema {
+typedef struct {
 	int value;
 	int head;
 	int tail;
@@ -71,7 +71,7 @@ typedef struct s_sema {
 } SEMAPHORE;
 
 /* stacks of tasks */
-#define STACK_SIZE_TTY        0x8000
+#define STACK_SIZE_TTY      0x8000
 #define STACK_SIZE_TESTA    0x8000
 #define STACK_SIZE_TESTB    0x8000
 #define STACK_SIZE_TESTC    0x8000

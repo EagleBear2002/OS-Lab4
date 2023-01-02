@@ -48,7 +48,7 @@ PUBLIC    system_call sys_call_table[NR_SYS_CALL] = {
 
 // TODO: added here
 PUBLIC  SEMAPHORE rw_mutex = {1, 0, 0};
-PUBLIC  SEMAPHORE w_mutex = {1, 0, 0};
-PUBLIC  SEMAPHORE r_mutex = {1, 0, 0};
+PUBLIC  SEMAPHORE writer_mutex = {1, 0, 0};
+PUBLIC  SEMAPHORE reader_mutex = {1, 0, 0};
 PUBLIC  SEMAPHORE queue = {1, 0, 0};
-PUBLIC  SEMAPHORE n_r_mutex = {MAX_READERS, 0, 0};
+PUBLIC  SEMAPHORE reader_count_mutex = {MAX_READERS, 0, 0};

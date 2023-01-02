@@ -59,3 +59,7 @@ int printf(const char *fmt, ...) {
 	return i;
 }
 
+void puts(const char *str) {
+	printf(str);
+	printf("\n");
+}

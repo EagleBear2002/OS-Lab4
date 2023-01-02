@@ -28,7 +28,7 @@ EXTERN  int readers;
 EXTERN  int writers;
 EXTERN  int writing;
 EXTERN  int tr;
-EXTERN    int nr_current_console;
+EXTERN  int nr_current_console;
 
 extern PROCESS proc_table[];
 extern char task_stack[];
@@ -41,8 +41,8 @@ extern TTY tty_table[];
 extern CONSOLE console_table[];
 
 extern SEMAPHORE rw_mutex;
-extern SEMAPHORE w_mutex;
-extern SEMAPHORE r_mutex;
+extern SEMAPHORE writer_mutex;
+extern SEMAPHORE reader_mutex;
 extern SEMAPHORE queue;
-extern SEMAPHORE n_r_mutex;
+extern SEMAPHORE reader_count_mutex;
 

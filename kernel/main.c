@@ -124,25 +124,25 @@ PRIVATE write_proc(char proc, int slices, char color) {
 }
 
 // 读写公平方案
-void read_gp(char proc, int slices, char color) {
+void read_fair(char proc, int slices, char color) {
 	P(&queue);
-	P(&n_r_mutex);
-	P(&r_mutex);
+	P(&reader_count_mutex);
+	P(&reader_mutex);
 	if (readers == 0)
 		P(&rw_mutex); // 有读者，禁止写
 	readers++;
-	V(&r_mutex);
+	V(&reader_mutex);
 	V(&queue);
 	read_proc(proc, slices, color);
-	P(&r_mutex);
+	P(&reader_mutex);
 	readers--;
 	if (readers == 0)
 		V(&rw_mutex); // 没有读者，可以开始写了
-	V(&r_mutex);
-	V(&n_r_mutex);
+	V(&reader_mutex);
+	V(&reader_count_mutex);
 }
 
-void write_gp(char proc, int slices, char color) {
+void write_fair(char proc, int slices, char color) {
 	P(&queue);
 	P(&rw_mutex);
 	writing = 1;
@@ -155,26 +155,27 @@ void write_gp(char proc, int slices, char color) {
 
 // 读者优先
 void read_rf(char proc, int slices, char color) {
-	P(&r_mutex);
-	if (readers == 0)
-		P(&rw_mutex);
-	readers++;
-	V(&r_mutex);
+	P(&reader_count_mutex);
+	
+	P(&reader_mutex);
+	if (++readers == 1)
+		P(&rw_mutex); // 有读者时不允许写
+	V(&reader_mutex);
 	
 	read_proc(proc, slices, color);
 	
-	P(&r_mutex);
+	P(&reader_mutex);
 	tr--;
-	V(&r_mutex);
+	V(&reader_mutex);
 	
-	V(&n_r_mutex);
+	V(&reader_count_mutex);
 	
-	P(&r_mutex);
-	readers--;
-	if (readers == 0)
-		V(&rw_mutex); // 没有读者，可以开始写了
-	V(&r_mutex);
+	P(&reader_mutex);
+	if (--readers == 0)
+		V(&rw_mutex); // 没有读者，可以开始写
+	V(&reader_mutex);
 	
+	V(&reader_count_mutex);
 }
 
 void write_rf(char proc, int slices, char color) {
@@ -188,35 +189,35 @@ void write_rf(char proc, int slices, char color) {
 
 // 写者优先
 void read_wf(char proc, int slices, char color) {
-	P(&n_r_mutex);
+	P(&reader_count_mutex);
 	
 	P(&queue);
-	P(&r_mutex);
+	P(&reader_mutex);
 	if (readers == 0)
 		P(&rw_mutex);
 	readers++;
-	V(&r_mutex);
+	V(&reader_mutex);
 	V(&queue);
 	
 	//读过程开始
 	read_proc(proc, slices, color);
 	
-	P(&r_mutex);
+	P(&reader_mutex);
 	readers--;
 	if (readers == 0)
 		V(&rw_mutex); // 没有读者，可以开始写了
-	V(&r_mutex);
+	V(&reader_mutex);
 	
-	V(&n_r_mutex);
+	V(&reader_count_mutex);
 }
 
 void write_wf(char proc, int slices, char color) {
-	P(&w_mutex);
+	P(&writer_mutex);
 	// 写过程
 	if (writers == 0)
 		P(&queue);
 	writers++;
-	V(&w_mutex);
+	V(&writer_mutex);
 	
 	P(&rw_mutex);
 	writing = 1;
@@ -224,15 +225,15 @@ void write_wf(char proc, int slices, char color) {
 	writing = 0;
 	V(&rw_mutex);
 	
-	P(&w_mutex);
+	P(&writer_mutex);
 	writers--;
 	if (writers == 0)
 		V(&queue);
-	V(&w_mutex);
+	V(&writer_mutex);
 }
 
-read_f read_funcs[3] = {read_rf, read_wf, read_gp};
-write_f write_funcs[3] = {write_rf, write_wf, write_gp};
+read_f read_funcs[3] = {read_rf, read_wf, read_fair};
+write_f write_funcs[3] = {write_rf, write_wf, write_fair};
 
 void ReaderB() {
 //	sleep_ms(RELAX_SLICES_B * TIME_SLICE);
