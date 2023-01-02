@@ -52,7 +52,7 @@ PUBLIC void p_process(SEMAPHORE *s) {
 	s->value--;
 	if (s->value < 0) {
 		p_proc_ready->blocked = 1;
-		p_proc_ready->status = 0;
+		p_proc_ready->status = WAITING;
 		s->p_list[s->tail] = p_proc_ready;
 		s->tail = (s->tail + 1) % NR_PROCS;
 		schedule();

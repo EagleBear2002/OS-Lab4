@@ -113,12 +113,12 @@ PUBLIC int kernel_main() {
 	while (1) {}
 }
 
-PRIVATE read_proc(char proc, int slices, char color) {
+PRIVATE read_proc(int slices) {
 	p_proc_ready->status = WORKING;
 	sleep_ms(slices * TIME_SLICE); // 读耗时 slices个时间片
 }
 
-PRIVATE write_proc(char proc, int slices, char color) {
+PRIVATE write_proc(int slices) {
 	p_proc_ready->status = WORKING;
 	sleep_ms(slices * TIME_SLICE); // 写耗时 slices个时间片
 }
@@ -126,17 +126,18 @@ PRIVATE write_proc(char proc, int slices, char color) {
 // 读写公平方案
 void read_fair(char proc, int slices, char color) {
 	P(&queue);
+	
 	P(&reader_count_mutex);
 	P(&reader_mutex);
-	if (readers == 0)
+	if (++readers == 1)
 		P(&rw_mutex); // 有读者，禁止写
-	readers++;
 	V(&reader_mutex);
+	
 	V(&queue);
-	read_proc(proc, slices, color);
+	
+	read_proc(slices);
 	P(&reader_mutex);
-	readers--;
-	if (readers == 0)
+	if (--readers == 0)
 		V(&rw_mutex); // 没有读者，可以开始写了
 	V(&reader_mutex);
 	V(&reader_count_mutex);
@@ -148,7 +149,7 @@ void write_fair(char proc, int slices, char color) {
 	writing = 1;
 	V(&queue);
 	// 写过程
-	write_proc(proc, slices, color);
+	write_proc(slices);
 	writing = 0;
 	V(&rw_mutex);
 }
@@ -162,7 +163,7 @@ void read_rf(char proc, int slices, char color) {
 		P(&rw_mutex); // 有读者时不允许写
 	V(&reader_mutex);
 	
-	read_proc(proc, slices, color);
+	read_proc(slices);
 	
 	P(&reader_mutex);
 	tr--;
@@ -172,17 +173,16 @@ void read_rf(char proc, int slices, char color) {
 	
 	P(&reader_mutex);
 	if (--readers == 0)
-		V(&rw_mutex); // 没有读者，可以开始写
+		V(&rw_mutex); // 没有读者时可以开始写
+		
 	V(&reader_mutex);
-	
-	V(&reader_count_mutex);
 }
 
 void write_rf(char proc, int slices, char color) {
 	P(&rw_mutex);
 	writing = 1;
 	// 写过程
-	write_proc(proc, slices, color);
+	write_proc(slices);
 	writing = 0;
 	V(&rw_mutex);
 }
@@ -200,7 +200,7 @@ void read_wf(char proc, int slices, char color) {
 	V(&queue);
 	
 	//读过程开始
-	read_proc(proc, slices, color);
+	read_proc(slices);
 	
 	P(&reader_mutex);
 	readers--;
@@ -221,7 +221,7 @@ void write_wf(char proc, int slices, char color) {
 	
 	P(&rw_mutex);
 	writing = 1;
-	write_proc(proc, slices, color);
+	write_proc(slices);
 	writing = 0;
 	V(&rw_mutex);
 	
@@ -236,7 +236,6 @@ read_f read_funcs[3] = {read_rf, read_wf, read_fair};
 write_f write_funcs[3] = {write_rf, write_wf, write_fair};
 
 void ReaderB() {
-//	sleep_ms(RELAX_SLICES_B * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY]('B', WORKING_SLICES_B, colors[proStats[1]]);
 		p_proc_ready->status = RELAXING;
@@ -245,7 +244,6 @@ void ReaderB() {
 }
 
 void ReaderC() {
-	//sleep_ms(2*TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY]('C', WORKING_SLICES_C, colors[proStats[2]]);
 		p_proc_ready->status = RELAXING;
@@ -254,7 +252,6 @@ void ReaderC() {
 }
 
 void ReaderD() {
-	//sleep_ms(3*TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY]('D', WORKING_SLICES_D, colors[proStats[3]]);
 		p_proc_ready->status = RELAXING;
@@ -263,7 +260,6 @@ void ReaderD() {
 }
 
 void WriterE() {
-	//sleep_ms(4*TIME_SLICE);
 	while (1) {
 		write_funcs[STRATEGY]('E', WORKING_SLICES_E, colors[proStats[4]]);
 		p_proc_ready->status = RELAXING;
@@ -272,7 +268,6 @@ void WriterE() {
 }
 
 void WriterF() {
-	//sleep_ms(5*TIME_SLICE);
 	while (1) {
 		write_funcs[STRATEGY]('F', WORKING_SLICES_F, colors[proStats[5]]);
 		p_proc_ready->status = RELAXING;
@@ -282,8 +277,6 @@ void WriterF() {
 
 void ReporterA() {
 	sleep_ms(TIME_SLICE);
-	char color = '\06';
-	int time_stamp = 0;
 
 #if STRATEGY == READ_FIRST
 	printf("strategy: reader first\n");
@@ -299,6 +292,8 @@ void ReporterA() {
 	printf("relax slices of D: %d\n", RELAX_SLICES_D);
 	printf("relax slices of E: %d\n", RELAX_SLICES_E);
 	printf("relax slices of F: %d\n", RELAX_SLICES_F);
+	
+	int time_stamp = 0;
 	while (++time_stamp <= 20) {
 		printf("%c%d%d ", '\06', time_stamp / 10, time_stamp % 10);
 		for (int i = NR_TASKS + 1; i < NR_PROCS + NR_TASKS; i++) {
@@ -308,6 +303,5 @@ void ReporterA() {
 		printf("\n");
 		sleep_ms(TIME_SLICE);
 	}
-	
 	while (1);
 }
