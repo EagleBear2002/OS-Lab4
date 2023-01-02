@@ -17,35 +17,36 @@
 #include "proto.h"
 
 
-PUBLIC	PROCESS	proc_table[NR_TASKS + NR_PROCS];
+PUBLIC    PROCESS proc_table[NR_TASKS + NR_PROCS];
 
-PUBLIC	TASK	task_table[NR_TASKS] = {
-	{task_tty, STACK_SIZE_TTY, "tty"}};
+PUBLIC    TASK task_table[NR_TASKS] = {
+		{task_tty, STACK_SIZE_TTY, "tty"}};
 
-PUBLIC  TASK    user_proc_table[NR_PROCS] = {
-                                        {ReporterA, STACK_SIZE_TESTA, "ReporterA"},
-					{ReaderB, STACK_SIZE_TESTB, "ReaderB"},
-					{ReaderC, STACK_SIZE_TESTC, "ReaderC"},
-					{ReaderD, STACK_SIZE_TESTD, "ReaderD"},
-                    {WriterE, STACK_SIZE_TESTE, "WriterE"},
-                    {WriterF, STACK_SIZE_TESTF, "WriterF"}
-                    };
-
-PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
-
-PUBLIC	TTY		tty_table[NR_CONSOLES];
-PUBLIC	CONSOLE		console_table[NR_CONSOLES];
-
-PUBLIC	irq_handler	irq_table[NR_IRQ];
-
-PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
-        sys_get_ticks,
-        sys_write_str,
-        sys_sleep,
-        p_process,
-        v_process
+PUBLIC  TASK user_proc_table[NR_PROCS] = {
+		{ReporterA, STACK_SIZE_TESTA, "ReporterA"},
+		{ReaderB,   STACK_SIZE_TESTB, "ReaderB"},
+		{ReaderC,   STACK_SIZE_TESTC, "ReaderC"},
+		{ReaderD,   STACK_SIZE_TESTD, "ReaderD"},
+		{WriterE,   STACK_SIZE_TESTE, "WriterE"},
+		{WriterF,   STACK_SIZE_TESTF, "WriterF"}
 };
 
+PUBLIC    char task_stack[STACK_SIZE_TOTAL];
+
+PUBLIC    TTY tty_table[NR_CONSOLES];
+PUBLIC    CONSOLE console_table[NR_CONSOLES];
+
+PUBLIC    irq_handler irq_table[NR_IRQ];
+
+PUBLIC    system_call sys_call_table[NR_SYS_CALL] = {
+		sys_get_ticks,
+		sys_write_str,
+		sys_sleep,
+		p_process,
+		v_process
+};
+
+// TODO: added here
 PUBLIC  SEMAPHORE rw_mutex = {1, 0, 0};
 PUBLIC  SEMAPHORE w_mutex = {1, 0, 0};
 PUBLIC  SEMAPHORE r_mutex = {1, 0, 0};
