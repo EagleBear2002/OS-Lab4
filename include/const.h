@@ -38,6 +38,7 @@
 #define    PRIVILEGE_KRNL    0
 #define    PRIVILEGE_TASK    1
 #define    PRIVILEGE_USER    3
+
 /* RPL */
 #define    RPL_KRNL    SA_RPL0
 #define    RPL_TASK    SA_RPL1
@@ -100,11 +101,29 @@
 
 // TODO: ADDED HERE
 #define TIME_SLICE      1000
+
+#define WORKING_SLICES_B  2
+#define WORKING_SLICES_C  3
+#define WORKING_SLICES_D  3
+#define WORKING_SLICES_E  3
+#define WORKING_SLICES_F  4
+
 // TODO: Changable
-#define MAX_READERS     3
+#define MAX_READERS     2
+#define RELAX_SLICES_B  0
+#define RELAX_SLICES_C  0
+#define RELAX_SLICES_D  0
+#define RELAX_SLICES_E  0
+#define RELAX_SLICES_F  0
+
+#define READ_FIRST      0
+#define WRITE_FIRST     1
+#define FAIR            2
+
+#define STRATEGY READ_FIRST
 
 #define BRIGHT_RED      0x0C
 #define BRIGHT_GREEN    0x0A
-#define BRIGHT_BLUE        0x09    /* 1001 */
+#define BRIGHT_BLUE     0x09    /* 1001 */
 
 #endif /* _ORANGES_CONST_H_ */

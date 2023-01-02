@@ -15,11 +15,9 @@
 #include "global.h"
 #include "proto.h"
 
-
 int proStats[6] = {0, 0, 0, 0, 0, 0};
 char colors[3] = {'\01', '\03', '\02'};
 char signs[3] = {'X', 'Z', 'O'};
-int strategy;
 
 PRIVATE void init_tasks() {
 	init_screen(tty_table);
@@ -28,7 +26,8 @@ PRIVATE void init_tasks() {
 	for (int i = 0; i < 6; i++) {
 		proStats[i] = 0;
 	}
-	// 表驱动，对应进程0, 1, 2, 3, 4, 5, 6
+	
+	// 表驱动，对应进程 0, 1, 2, 3, 4, 5, 6
 	int prior[7] = {1, 1, 1, 1, 1, 1, 1};
 	for (int i = 0; i < 7; ++i) {
 		proc_table[i].ticks = prior[i];
@@ -44,10 +43,9 @@ PRIVATE void init_tasks() {
 	
 	tr = 0;
 	
-	strategy = 0; // 切换策略
-	
 	p_proc_ready = proc_table;
 }
+
 /*======================================================================*
                             kernel_main
  *======================================================================*/
@@ -58,11 +56,10 @@ PUBLIC int kernel_main() {
 	PROCESS *p_proc = proc_table;
 	char *p_task_stack = task_stack + STACK_SIZE_TOTAL;
 	u16 selector_ldt = SELECTOR_LDT_FIRST;
-	int i;
 	u8 privilege;
 	u8 rpl;
 	int eflags;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
+	for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
 		if (i < NR_TASKS) {     /* 任务 */
 			p_task = task_table + i;
 			privilege = PRIVILEGE_TASK;
@@ -79,15 +76,13 @@ PUBLIC int kernel_main() {
 		p_proc->pid = i;            // pid
 		p_proc->sleeping = 0; // 初始化结构体新增成员
 		p_proc->blocked = 0;
-		p_proc->status = 0;
+		p_proc->status = WAITING;
 		
 		p_proc->ldt_sel = selector_ldt;
 		
-		memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3],
-		       sizeof(DESCRIPTOR));
+		memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
 		p_proc->ldts[0].attr1 = DA_C | privilege << 5;
-		memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3],
-		       sizeof(DESCRIPTOR));
+		memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
 		p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 		p_proc->regs.cs = (0 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
 		p_proc->regs.ds = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
@@ -119,16 +114,16 @@ PUBLIC int kernel_main() {
 }
 
 PRIVATE read_proc(char proc, int slices, char color) {
-	p_proc_ready->status = 2;
-	sleep_ms(slices * TIME_SLICE); // 读耗时slices个时间片
+	p_proc_ready->status = WORKING;
+	sleep_ms(slices * TIME_SLICE); // 读耗时 slices个时间片
 }
 
 PRIVATE write_proc(char proc, int slices, char color) {
-	p_proc_ready->status = 2;
-	sleep_ms(slices * TIME_SLICE); // 写耗时slices个时间片
+	p_proc_ready->status = WORKING;
+	sleep_ms(slices * TIME_SLICE); // 写耗时 slices个时间片
 }
 
-//读写公平方案
+// 读写公平方案
 void read_gp(char proc, int slices, char color) {
 	P(&queue);
 	P(&n_r_mutex);
@@ -236,87 +231,82 @@ void write_wf(char proc, int slices, char color) {
 	V(&w_mutex);
 }
 
-read_f read_funcs[3] = {read_gp, read_rf, read_wf};
-write_f write_funcs[3] = {write_gp, write_rf, write_wf};
+read_f read_funcs[3] = {read_rf, read_wf, read_gp};
+write_f write_funcs[3] = {write_rf, write_wf, write_gp};
 
-/*======================================================================*
-                               ReaderB
- *======================================================================*/
 void ReaderB() {
-	//sleep_ms(TIME_SLICE);
+//	sleep_ms(RELAX_SLICES_B * TIME_SLICE);
 	while (1) {
-		read_funcs[strategy]('B', 2, colors[proStats[1]]);
-		p_proc_ready->status = 1;
-		//sleep_ms(TIME_SLICE);
+		read_funcs[STRATEGY]('B', WORKING_SLICES_B, colors[proStats[1]]);
+		p_proc_ready->status = RELAXING;
+		sleep_ms(RELAX_SLICES_B * TIME_SLICE);
 	}
 }
 
-/*======================================================================*
-                               ReaderC
- *======================================================================*/
 void ReaderC() {
 	//sleep_ms(2*TIME_SLICE);
 	while (1) {
-		read_funcs[strategy]('C', 3, colors[proStats[2]]);
-		p_proc_ready->status = 1;
-		//sleep_ms(TIME_SLICE);
+		read_funcs[STRATEGY]('C', WORKING_SLICES_C, colors[proStats[2]]);
+		p_proc_ready->status = RELAXING;
+		sleep_ms(RELAX_SLICES_C * TIME_SLICE);
 	}
 }
 
-/*======================================================================*
-                               ReaderD
- *======================================================================*/
 void ReaderD() {
 	//sleep_ms(3*TIME_SLICE);
 	while (1) {
-		read_funcs[strategy]('D', 3, colors[proStats[3]]);
-		p_proc_ready->status = 1;
-		//sleep_ms(TIME_SLICE);
+		read_funcs[STRATEGY]('D', WORKING_SLICES_D, colors[proStats[3]]);
+		p_proc_ready->status = RELAXING;
+		sleep_ms(RELAX_SLICES_D * TIME_SLICE);
 	}
 }
 
-/*======================================================================*
-                               WriterE
- *======================================================================*/
 void WriterE() {
 	//sleep_ms(4*TIME_SLICE);
 	while (1) {
-		write_funcs[strategy]('E', 3, colors[proStats[4]]);
-		p_proc_ready->status = 1;
-		//sleep_ms(TIME_SLICE);
+		write_funcs[STRATEGY]('E', WORKING_SLICES_E, colors[proStats[4]]);
+		p_proc_ready->status = RELAXING;
+		sleep_ms(RELAX_SLICES_E * TIME_SLICE);
 	}
 }
 
-/*======================================================================*
-                               WriterF
- *======================================================================*/
 void WriterF() {
 	//sleep_ms(5*TIME_SLICE);
 	while (1) {
-		write_funcs[strategy]('F', 4, colors[proStats[5]]);
-		p_proc_ready->status = 1;
-		//sleep_ms(TIME_SLICE);
+		write_funcs[STRATEGY]('F', WORKING_SLICES_F, colors[proStats[5]]);
+		p_proc_ready->status = RELAXING;
+		sleep_ms(RELAX_SLICES_F * TIME_SLICE);
 	}
 }
 
-/*======================================================================*
-                               ReporterA
- *======================================================================*/
 void ReporterA() {
 	sleep_ms(TIME_SLICE);
 	char color = '\06';
-	int time = 0;
-	while (time <= 20) {
-		printf("%c%d ", '\06', time++);
+	int time_stamp = 0;
+
+#if STRATEGY == READ_FIRST
+	printf("strategy: reader first\n");
+#elif STRATEGY == WRITE_FIRST
+	printf("strategy: writer first\n");
+#elif STRATEGY == FAIR
+	printf("strategy: fair\n");
+#endif
+	
+	printf("count of max reader: %d\n", MAX_READERS);
+	printf("relax slices of B: %d\n", RELAX_SLICES_B);
+	printf("relax slices of C: %d\n", RELAX_SLICES_C);
+	printf("relax slices of D: %d\n", RELAX_SLICES_D);
+	printf("relax slices of E: %d\n", RELAX_SLICES_E);
+	printf("relax slices of F: %d\n", RELAX_SLICES_F);
+	while (++time_stamp <= 20) {
+		printf("%c%d%d ", '\06', time_stamp / 10, time_stamp % 10);
 		for (int i = NR_TASKS + 1; i < NR_PROCS + NR_TASKS; i++) {
 			int proc_status = (proc_table + i)->status;
 			printf("%c%c ", colors[proc_status], signs[proc_status]);
-			
 		}
 		printf("\n");
 		sleep_ms(TIME_SLICE);
 	}
-	while (1) {
 	
-	}
+	while (1);
 }

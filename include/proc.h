@@ -27,6 +27,10 @@ typedef struct s_stackframe {    /* proc_ptr points here				↑ Low			*/
 	u32 ss;        /*  ┛						┷High			*/
 } STACK_FRAME;
 
+typedef enum {
+	WAITING, RELAXING, WORKING
+} Status;
+
 
 typedef struct s_proc {
 	STACK_FRAME regs;          /* process registers saved in stack frame */
@@ -43,7 +47,7 @@ typedef struct s_proc {
 //	TODO: added here
 	int blocked;
 	int sleeping;
-	int status;
+	Status status;
 	
 	int nr_tty;
 } PROCESS;
