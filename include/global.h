@@ -41,6 +41,6 @@ extern CONSOLE console_table[];
 extern SEMAPHORE rw_mutex;
 extern SEMAPHORE writer_mutex;
 extern SEMAPHORE reader_mutex;
-extern SEMAPHORE S;
+extern SEMAPHORE queue;
 extern SEMAPHORE reader_count_mutex;
 

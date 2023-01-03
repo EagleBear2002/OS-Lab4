@@ -63,6 +63,7 @@ PUBLIC void v_process(SEMAPHORE *s) {
 	s->value++;
 	if (s->value <= 0) {
 		s->p_list[s->head]->blocked = FALSE; // 唤醒最先进入队列的进程
+//		p_proc_ready->status = WORKING;
 		s->head = (s->head + 1) % NR_PROCS;
 	}
 	enable_int();

@@ -67,7 +67,7 @@ PUBLIC int kernel_main() {
 		p_proc->pid = i;            // pid
 		p_proc->sleeping = 0; // 初始化结构体新增成员
 		p_proc->blocked = FALSE;
-		p_proc->status = WAITING;
+		p_proc->status = RELAXING;
 		
 		p_proc->ldt_sel = selector_ldt;
 		
@@ -116,7 +116,7 @@ PRIVATE void write_proc(int slices) {
 
 // 读写公平方案
 void read_fair(int slices) {
-	P(&S);
+	P(&queue);
 	
 	P(&reader_count_mutex);
 	P(&reader_mutex);
@@ -124,7 +124,7 @@ void read_fair(int slices) {
 		P(&rw_mutex); // 有读者，禁止写
 	V(&reader_mutex);
 	
-	V(&S);
+	V(&queue);
 	
 	read_proc(slices);
 	
@@ -136,28 +136,28 @@ void read_fair(int slices) {
 }
 
 void write_fair(int slices) {
-	P(&S);
+	P(&queue);
 	P(&rw_mutex);
 	write_proc(slices);
 	V(&rw_mutex);
-	V(&S);
+	V(&queue);
 }
 
 // 读者优先
 void read_rf(int slices) {
-	P(&reader_count_mutex);
 	P(&reader_mutex);
 	if (++readers == 1)
 		P(&writer_mutex); // 有读者时不允许写
 	V(&reader_mutex);
 	
+	P(&reader_count_mutex);
 	read_proc(slices);
+	V(&reader_count_mutex);
 	
 	P(&reader_mutex);
 	if (--readers == 0)
 		V(&writer_mutex); // 没有读者时可以开始写
 	V(&reader_mutex);
-	V(&reader_count_mutex);
 }
 
 void write_rf(int slices) {
@@ -168,58 +168,71 @@ void write_rf(int slices) {
 
 // 写者优先
 void read_wf(int slices) {
-	P(&rw_mutex);
+	P(&reader_count_mutex);
+	
+	P(&queue);
 	P(&reader_mutex);
 	if (++readers == 1)
-		P(&writer_mutex); // 有读者时不允许写
+		P(&rw_mutex); // 有读者时不允许写
 	V(&reader_mutex);
-	V(&rw_mutex);
+	V(&queue);
 	
-	P(&reader_count_mutex);
 	read_proc(slices);
-	V(&reader_count_mutex);
 	
 	P(&reader_mutex);
 	if (--readers == 0)
-		V(&writer_mutex); // 没有读者时可以开始写
+		V(&rw_mutex); // 没有读者时可以开始写
 	V(&reader_mutex);
+	
+	V(&reader_count_mutex);
 }
 
 void write_wf(int slices) {
-	P(&rw_mutex);
 	P(&writer_mutex);
-	write_proc(slices);
+	if (++writers == 1)
+		P(&queue);
 	V(&writer_mutex);
+	
+	P(&rw_mutex);
+	write_proc(slices);
 	V(&rw_mutex);
+	
+	P(&writer_mutex);
+	if (--writers == 0)
+		V(&queue);
+	V(&writer_mutex);
 }
 
 read_f read_funcs[3] = {read_rf, read_wf, read_fair};
 write_f write_funcs[3] = {write_rf, write_wf, write_fair};
 
 void ReaderB() {
-	sleep_ms(3 * TIME_SLICE);
+//	sleep_ms(3 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_B);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_B * TIME_SLICE);
+		p_proc_ready->status = WAITING;
 	}
 }
 
 void ReaderC() {
-	sleep_ms(3 * TIME_SLICE);
+//	sleep_ms(3 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_C);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_C * TIME_SLICE);
+		p_proc_ready->status = WAITING;
 	}
 }
 
 void ReaderD() {
-	sleep_ms(3 * TIME_SLICE);
+//	sleep_ms(3 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_D);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_D * TIME_SLICE);
+		p_proc_ready->status = WAITING;
 	}
 }
 
@@ -229,6 +242,7 @@ void WriterE() {
 		write_funcs[STRATEGY](WORKING_SLICES_E);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_E * TIME_SLICE);
+		p_proc_ready->status = WAITING;
 	}
 }
 
@@ -238,6 +252,7 @@ void WriterF() {
 		write_funcs[STRATEGY](WORKING_SLICES_F);
 		p_proc_ready->status = RELAXING;
 		sleep_ms(RELAX_SLICES_F * TIME_SLICE);
+		p_proc_ready->status = WAITING;
 	}
 }
 

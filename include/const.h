@@ -110,11 +110,11 @@
 
 // TODO: Changable
 #define MAX_READERS     3
-#define RELAX_SLICES_B  0
-#define RELAX_SLICES_C  0
-#define RELAX_SLICES_D  0
-#define RELAX_SLICES_E  0
-#define RELAX_SLICES_F  0
+#define RELAX_SLICES_B  1
+#define RELAX_SLICES_C  1
+#define RELAX_SLICES_D  1
+#define RELAX_SLICES_E  3
+#define RELAX_SLICES_F  3
 
 #define READ_FIRST      0
 #define WRITE_FIRST     1
