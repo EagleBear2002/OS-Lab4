@@ -15,8 +15,6 @@
 #include "global.h"
 #include "proto.h"
 
-
-
 /*======================================================================*
                               schedule
  *======================================================================*/
@@ -27,14 +25,14 @@ PUBLIC void schedule() {
 	while (!greatest_ticks) {
 		for (p = proc_table; p < proc_table + NR_TASKS + NR_PROCS; p++) {
 			
-			if (p->sleeping > 0 || p->blocked) continue;
+			if (p->sleeping > 0 || p->blocked == TRUE) continue;
 			// 正在睡眠/阻塞的进程不会被执行（也就是不会被分配时间片）
 			if (p->ticks > greatest_ticks) {
 				greatest_ticks = p->ticks;
 				p_proc_ready = p;
 			}
 		}
-		// 如果都是0，那么需要重设ticks
+		// 如果都是 0，那么需要重设 ticks
 		if (!greatest_ticks) {
 			for (p = proc_table; p < proc_table + NR_TASKS + NR_PROCS; p++) {
 				if (p->ticks > 0) continue; // >0 还进入这里只能说明它被阻塞了
@@ -51,7 +49,7 @@ PUBLIC void p_process(SEMAPHORE *s) {
 	disable_int();
 	s->value--;
 	if (s->value < 0) {
-		p_proc_ready->blocked = 1;
+		p_proc_ready->blocked = TRUE;
 		p_proc_ready->status = WAITING;
 		s->p_list[s->tail] = p_proc_ready;
 		s->tail = (s->tail + 1) % NR_PROCS;
@@ -64,7 +62,7 @@ PUBLIC void v_process(SEMAPHORE *s) {
 	disable_int();
 	s->value++;
 	if (s->value <= 0) {
-		s->p_list[s->head]->blocked = WAITING; // 唤醒最先进入队列的进程
+		s->p_list[s->head]->blocked = FALSE; // 唤醒最先进入队列的进程
 		s->head = (s->head + 1) % NR_PROCS;
 	}
 	enable_int();

@@ -26,8 +26,6 @@ EXTERN    PROCESS *p_proc_ready;
 // TODO: added here
 EXTERN  int readers;
 EXTERN  int writers;
-EXTERN  int writing;
-EXTERN  int tr;
 EXTERN  int nr_current_console;
 
 extern PROCESS proc_table[];
@@ -43,6 +41,6 @@ extern CONSOLE console_table[];
 extern SEMAPHORE rw_mutex;
 extern SEMAPHORE writer_mutex;
 extern SEMAPHORE reader_mutex;
-extern SEMAPHORE queue;
+extern SEMAPHORE S;
 extern SEMAPHORE reader_count_mutex;
 

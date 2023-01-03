@@ -28,3 +28,5 @@ typedef struct s_console {
 
 
 #endif /* _ORANGES_CONSOLE_H_ */
+
+PUBLIC void clean(CONSOLE *p_con);

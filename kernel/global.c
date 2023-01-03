@@ -50,5 +50,5 @@ PUBLIC    system_call sys_call_table[NR_SYS_CALL] = {
 PUBLIC  SEMAPHORE rw_mutex = {1, 0, 0};
 PUBLIC  SEMAPHORE writer_mutex = {1, 0, 0};
 PUBLIC  SEMAPHORE reader_mutex = {1, 0, 0};
-PUBLIC  SEMAPHORE queue = {1, 0, 0};
+PUBLIC  SEMAPHORE S = {1, 0, 0};
 PUBLIC  SEMAPHORE reader_count_mutex = {MAX_READERS, 0, 0};

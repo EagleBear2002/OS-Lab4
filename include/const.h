@@ -110,17 +110,17 @@
 
 // TODO: Changable
 #define MAX_READERS     3
-#define RELAX_SLICES_B  1
-#define RELAX_SLICES_C  1
-#define RELAX_SLICES_D  1
-#define RELAX_SLICES_E  1
-#define RELAX_SLICES_F  1
+#define RELAX_SLICES_B  0
+#define RELAX_SLICES_C  0
+#define RELAX_SLICES_D  0
+#define RELAX_SLICES_E  0
+#define RELAX_SLICES_F  0
 
 #define READ_FIRST      0
 #define WRITE_FIRST     1
 #define FAIR            2
 
-#define STRATEGY READ_FIRST
+#define STRATEGY WRITE_FIRST
 
 #define BRIGHT_RED      0x0C
 #define BRIGHT_GREEN    0x0A

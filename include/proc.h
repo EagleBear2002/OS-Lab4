@@ -43,7 +43,7 @@ typedef struct s_proc {
 	
 	u32 pid;                   /* process id passed in from MM */
 	char p_name[16];           /* name of the process */
-	
+
 //	TODO: added here
 	int blocked;
 	int sleeping;
@@ -87,3 +87,4 @@ typedef struct {
                 STACK_SIZE_TESTE + \
                 STACK_SIZE_TESTF)
 
+PUBLIC void schedule();
