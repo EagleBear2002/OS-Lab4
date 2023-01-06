@@ -1,7 +1,134 @@
 # 《计算机与操作系统》第四次实验
 ## 实验代码
 
+### 增加的系统调用
+
+```c
+PUBLIC void p_process(SEMAPHORE *s) {
+	disable_int();
+	s->value--;
+	if (s->value < 0) {
+		p_proc_ready->blocked = TRUE;
+		p_proc_ready->status = WAITING;
+		s->p_list[s->tail] = p_proc_ready;
+		s->tail = (s->tail + 1) % NR_PROCS;
+		schedule();
+	}
+	enable_int();
+}
+
+PUBLIC void v_process(SEMAPHORE *s) {
+	disable_int();
+	s->value++;
+	if (s->value <= 0) {
+		s->p_list[s->head]->blocked = FALSE;
+//		p_proc_ready->status = WORKING;
+		s->head = (s->head + 1) % NR_PROCS;
+	}
+	enable_int();
+}
+
+PUBLIC int sys_get_ticks() {
+	return ticks;
+}
+
+PUBLIC void sys_sleep(int milli_sec) {
+	int ticks = milli_sec / 1000 * HZ * 10;
+	p_proc_ready->sleeping = ticks;
+	schedule();
+}
+
+PUBLIC void sys_write_str(char *buf, int len) {
+	CONSOLE *p_con = console_table;
+	for (int i = 0; i < len; i++) {
+		out_char(p_con, buf[i]);
+	}
+}
+```
+
+```c
+PUBLIC    system_call sys_call_table[NR_SYS_CALL] = {
+		sys_get_ticks,
+		sys_write_str,
+		sys_sleep,
+		p_process,
+		v_process
+};
+```
+
+### 读者优先
+
+在此策略下，写者进程可能会被饿死。
+
+```c
+void read_rf(int slices) {
+	P(&reader_mutex);
+	if (++readers == 1)
+		P(&writer_mutex); // 有读者时不允许写
+	V(&reader_mutex);
+	
+	P(&reader_count_mutex);
+	read_proc(slices);
+	V(&reader_count_mutex);
+	
+	P(&reader_mutex);
+	if (--readers == 0)
+		V(&writer_mutex); // 没有读者时可以开始写
+	V(&reader_mutex);
+}
+
+void write_rf(int slices) {
+	P(&writer_mutex);
+	write_proc(slices);
+	V(&writer_mutex);
+}
+```
+
+### 写者优先
+
+在此策略下，读者进程可能会被饿死。
+
+```c
+void read_wf(int slices) {
+	P(&reader_count_mutex);
+	
+	P(&S);
+	P(&reader_mutex);
+	if (++readers == 1)
+		P(&rw_mutex); // 有读者时不允许写
+	V(&reader_mutex);
+	V(&S);
+	
+	read_proc(slices);
+	
+	P(&reader_mutex);
+	if (--readers == 0)
+		V(&rw_mutex); // 没有读者时可以开始写
+	V(&reader_mutex);
+	
+	V(&reader_count_mutex);
+}
+
+void write_wf(int slices) {
+	P(&writer_mutex);
+	if (++writers == 1)
+		P(&S);
+	V(&writer_mutex);
+	
+	P(&rw_mutex);
+	write_proc(slices);
+	V(&rw_mutex);
+	
+	P(&writer_mutex);
+	if (--writers == 0)
+		V(&S);
+	V(&writer_mutex);
+}
+```
+
 ### 读写公平
+
+读写公平是防止进程饿死的方法。
 
 ```c
 void read_fair(int slices) {
@@ -33,64 +160,6 @@ void write_fair(int slices) {
 }
 ```
 
-### 读者优先
-
-```c
-
-void read_rf(int slices) {
-	P(&reader_count_mutex);
-	P(&reader_mutex);
-	if (++readers == 1)
-		P(&writer_mutex); // 有读者时不允许写
-	V(&reader_mutex);
-	
-	read_proc(slices);
-	
-	P(&reader_mutex);
-	if (--readers == 0)
-		V(&writer_mutex); // 没有读者时可以开始写
-	V(&reader_mutex);
-	V(&reader_count_mutex);
-}
-
-void write_rf(int slices) {
-	P(&writer_mutex);
-	write_proc(slices);
-	V(&writer_mutex);
-}
-```
-
-### 写者优先
-
-```c
-
-void read_wf(int slices) {
-	P(&rw_mutex);
-	P(&reader_mutex);
-	if (++readers == 1)
-		P(&writer_mutex); // 有读者时不允许写
-	V(&reader_mutex);
-	V(&rw_mutex);
-	
-	P(&reader_count_mutex);
-	read_proc(slices);
-	V(&reader_count_mutex);
-	
-	P(&reader_mutex);
-	if (--readers == 0)
-		V(&writer_mutex); // 没有读者时可以开始写
-	V(&reader_mutex);
-}
-
-void write_wf(int slices) {
-	P(&rw_mutex);
-	P(&writer_mutex);
-	write_proc(slices);
-	V(&writer_mutex);
-	V(&rw_mutex);
-}
-```
-
 ## 实验截图
 
 ![](README/image-20230103135916463.png)
@@ -105,7 +174,7 @@ void write_wf(int slices) {
 
 ### 进程表是什么？
 
-进程表是存储进程状态信息的数据结构。进程表是进程存在的唯一标识，是操作系统用来记录和刻画进程状态及环境信息的数据结构，是进程动态特征的汇集，也是操作系统掌握进程的唯一资料结构和管理进程的主要依据。
+**进程表是存储进程状态信息的数据结构。**进程表是进程存在的唯一标识，是操作系统用来记录和刻画进程状态及环境信息的数据结构，是进程动态特征的汇集，也是操作系统掌握进程的唯一资料结构和管理进程的主要依据。
 
 ### 进程栈是什么？
 
@@ -113,7 +182,7 @@ void write_wf(int slices) {
 
 ### 当寄存器的值已经被保存到进程表内，`esp` 应该指向何处来避免破坏进程表的值？
 
-进程运行时，`esp` 指向堆栈中的某个位置。寄存器的值刚刚被保存到进程表内，`esp` 是指向进程表某个位置的。如果接下来进行任何的堆栈操作，都会破坏掉进程表的值。为解决这个问题，使用内核栈，让 `esp` 指向内核栈。
+进程运行时，`esp` 指向堆栈中的某个位置。寄存器的值刚刚被保存到进程表内，`esp` 是指向进程表某个位置的。如果接下来进行任何的堆栈操作，都会破坏掉进程表的值。为解决这个问题，使用内核栈，**让 `esp` 指向内核栈**。
 
 ### `tty` 是什么？
 
@@ -121,7 +190,7 @@ Teletype 的缩写。终端是一种字符型设备，它有多种类型，通�
 
 ### 不同的 `tty` 为什么输出不同的画面在同⼀个显示器上？
 
-不同 TTY 各有一个 CONSOLE，各个 CONSOLE 公用同一块显存。虽然不同的 TTY 对应的输入设备是同一个键盘，但输出却好比是在不同的显示器上，因为不同的 TTY 对应的屏幕画面可能是迥然不同的。实际上，我们当然是在使用同一个显示器，画面的不同只不过是因为显示了显存的不同位置罢了。
+不同 TTY 各有一个 CONSOLE，各个 CONSOLE 公用同一块显存的不同位置。
 
 ### 解释 `tty` 任务执行的过程？
 
@@ -171,4 +240,10 @@ typedef struct s_console {
 
 ### 什么是时间片？
 
+时间片是分时操作系统分配给每个正在运行的进程微观上的一段 CPU 时间。
+
 ### 结合实验代码解释什么是内核函数？什么是系统调用？
+
+内核支持函数，又称例程，是指只能在内核模式下调用的例程或子程序。主要是为了内核支持函数不被用户程序破坏。
+
+系统调用是用户访问内核功能的方式之一。在 [1.1 增加的系统调用](#增加的系统调用) 部分展示了笔者增加的部分系统调用。

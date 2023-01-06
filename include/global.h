@@ -38,9 +38,9 @@ extern TASK user_proc_table[];
 extern TTY tty_table[];
 extern CONSOLE console_table[];
 
-extern SEMAPHORE rw_mutex;
-extern SEMAPHORE writer_mutex;
-extern SEMAPHORE reader_mutex;
-extern SEMAPHORE queue;
-extern SEMAPHORE reader_count_mutex;
+extern SEMAPHORE rw_mutex; // 实现读写互斥、写写互斥
+extern SEMAPHORE writer_mutex; // 写进程互斥访问
+extern SEMAPHORE reader_mutex; // 读进程互斥访问
+extern SEMAPHORE S; // 制衡读写者
+extern SEMAPHORE reader_count_mutex; // 限制读者人数
 

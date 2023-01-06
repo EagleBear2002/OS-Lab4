@@ -113,14 +113,14 @@
 #define RELAX_SLICES_B  1
 #define RELAX_SLICES_C  1
 #define RELAX_SLICES_D  1
-#define RELAX_SLICES_E  3
-#define RELAX_SLICES_F  3
+#define RELAX_SLICES_E  1
+#define RELAX_SLICES_F  1
 
 #define READ_FIRST      0
 #define WRITE_FIRST     1
 #define FAIR            2
 
-#define STRATEGY WRITE_FIRST
+#define STRATEGY FAIR
 
 #define BRIGHT_RED      0x0C
 #define BRIGHT_GREEN    0x0A

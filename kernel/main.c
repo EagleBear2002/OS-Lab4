@@ -116,7 +116,7 @@ PRIVATE void write_proc(int slices) {
 
 // 读写公平方案
 void read_fair(int slices) {
-	P(&queue);
+	P(&S);
 	
 	P(&reader_count_mutex);
 	P(&reader_mutex);
@@ -124,7 +124,7 @@ void read_fair(int slices) {
 		P(&rw_mutex); // 有读者，禁止写
 	V(&reader_mutex);
 	
-	V(&queue);
+	V(&S);
 	
 	read_proc(slices);
 	
@@ -136,11 +136,11 @@ void read_fair(int slices) {
 }
 
 void write_fair(int slices) {
-	P(&queue);
+	P(&S);
 	P(&rw_mutex);
 	write_proc(slices);
 	V(&rw_mutex);
-	V(&queue);
+	V(&S);
 }
 
 // 读者优先
@@ -170,12 +170,12 @@ void write_rf(int slices) {
 void read_wf(int slices) {
 	P(&reader_count_mutex);
 	
-	P(&queue);
+	P(&S);
 	P(&reader_mutex);
 	if (++readers == 1)
 		P(&rw_mutex); // 有读者时不允许写
 	V(&reader_mutex);
-	V(&queue);
+	V(&S);
 	
 	read_proc(slices);
 	
@@ -190,7 +190,7 @@ void read_wf(int slices) {
 void write_wf(int slices) {
 	P(&writer_mutex);
 	if (++writers == 1)
-		P(&queue);
+		P(&S);
 	V(&writer_mutex);
 	
 	P(&rw_mutex);
@@ -199,7 +199,7 @@ void write_wf(int slices) {
 	
 	P(&writer_mutex);
 	if (--writers == 0)
-		V(&queue);
+		V(&S);
 	V(&writer_mutex);
 }
 

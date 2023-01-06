@@ -42,9 +42,6 @@ PUBLIC void schedule() {
 	}
 }
 
-/**
- * FCFS算法
- */
 PUBLIC void p_process(SEMAPHORE *s) {
 	disable_int();
 	s->value--;
@@ -69,9 +66,6 @@ PUBLIC void v_process(SEMAPHORE *s) {
 	enable_int();
 }
 
-/*======================================================================*
-                           sys_get_ticks
- *======================================================================*/
 PUBLIC int sys_get_ticks() {
 	return ticks;
 }
