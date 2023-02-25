@@ -147,7 +147,7 @@ void write_fair(int slices) {
 void read_rf(int slices) {
 	P(&reader_mutex);
 	if (++readers == 1)
-		P(&writer_mutex); // 有读者时不允许写
+		P(&writer_mutex);
 	V(&reader_mutex);
 	
 	P(&reader_count_mutex);
@@ -156,14 +156,16 @@ void read_rf(int slices) {
 	
 	P(&reader_mutex);
 	if (--readers == 0)
-		V(&writer_mutex); // 没有读者时可以开始写
+		V(&writer_mutex);
 	V(&reader_mutex);
 }
 
 void write_rf(int slices) {
+	P(&rw_mutex);
 	P(&writer_mutex);
 	write_proc(slices);
 	V(&writer_mutex);
+	V(&rw_mutex);
 }
 
 // 写者优先
@@ -207,7 +209,7 @@ read_f read_funcs[3] = {read_rf, read_wf, read_fair};
 write_f write_funcs[3] = {write_rf, write_wf, write_fair};
 
 void ReaderB() {
-//	sleep_ms(3 * TIME_SLICE);
+	sleep_ms(3 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_B);
 		p_proc_ready->status = RELAXING;
@@ -217,7 +219,7 @@ void ReaderB() {
 }
 
 void ReaderC() {
-//	sleep_ms(3 * TIME_SLICE);
+	sleep_ms(30 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_C);
 		p_proc_ready->status = RELAXING;
@@ -227,7 +229,7 @@ void ReaderC() {
 }
 
 void ReaderD() {
-//	sleep_ms(3 * TIME_SLICE);
+	sleep_ms(30 * TIME_SLICE);
 	while (1) {
 		read_funcs[STRATEGY](WORKING_SLICES_D);
 		p_proc_ready->status = RELAXING;
@@ -247,7 +249,7 @@ void WriterE() {
 }
 
 void WriterF() {
-//	sleep_ms(2 * TIME_SLICE);
+	sleep_ms(2 * TIME_SLICE);
 	while (1) {
 		write_funcs[STRATEGY](WORKING_SLICES_F);
 		p_proc_ready->status = RELAXING;
@@ -260,7 +262,8 @@ void ReporterA() {
 	sleep_ms(TIME_SLICE);
 
 #if STRATEGY == READ_FIRST
-	printf("strategy: reader first\n");
+//	printf("strategy: Half-Reader First\n");
+	printf("strategy: Full-Reader First\n");
 #elif STRATEGY == WRITE_FIRST
 	printf("strategy: writer first\n");
 #elif STRATEGY == FAIR

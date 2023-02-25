@@ -77,6 +77,10 @@ PUBLIC void sys_sleep(int milli_sec) {
 	schedule();
 }
 
+//PUBLIC void puts(char* str) {
+//	sys_write_str(str, strlen(str));
+//}
+
 PUBLIC void sys_write_str(char *buf, int len) {
 	CONSOLE *p_con = console_table;
 	for (int i = 0; i < len; i++) {
